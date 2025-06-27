@@ -3,62 +3,94 @@
 import { requireRole } from "@/lib/auth"
 import { sql, ensureSchema } from "@/lib/database"
 import { redirect } from "next/navigation"
+import { transactionSchema } from "@/lib/validations"
+import type { Transaction } from "@/lib/types"
 
 export async function getTransactions() {
   await ensureSchema()
-  return await sql`
-    SELECT t.*, l.name as loft_name, u.full_name as user_name
-    FROM transactions t
-    LEFT JOIN lofts l ON t.loft_id = l.id
-    LEFT JOIN users u ON t.user_id = u.id
-    ORDER BY t.created_at DESC
-  `
+  const transactions = await sql`SELECT * FROM transactions ORDER BY date DESC`
+  return transactions
 }
 
-export async function createTransaction(formData: FormData) {
-  const session = await requireRole(["admin"])
+export async function getTransaction(id: string): Promise<Transaction | null> {
   await ensureSchema()
-
-  const data = Object.fromEntries(formData)
   try {
-    await sql`
-      INSERT INTO transactions (
-        amount, description, transaction_type, 
-        status, loft_id, user_id
-      ) VALUES (
-        ${data.amount},
-        ${data.description},
-        ${data.transaction_type},
-        ${data.status || 'pending'},
-        ${data.loft_id || null},
-        ${data.user_id || null}
-      )
+    const result = await sql`
+      SELECT * FROM transactions WHERE id = ${id}
     `
-    return { success: true }
+    return (result[0] as Transaction) || null
   } catch (error) {
-    return { error: error instanceof Error ? error.message : "Failed to create transaction" }
+    console.error("Error fetching transaction:", error)
+    return null
   }
 }
 
-export async function updateTransaction(id: string, formData: FormData) {
-  const session = await requireRole(["admin"])
+export async function createTransaction(data: unknown) {
+  const session = await requireRole(["admin", "manager"])
   await ensureSchema()
 
-  const data = Object.fromEntries(formData)
+  const validatedData = transactionSchema.parse(data)
+
   try {
-    await sql`
-      UPDATE transactions SET
-        amount = ${data.amount},
-        description = ${data.description},
-        transaction_type = ${data.transaction_type},
-        status = ${data.status},
-        loft_id = ${data.loft_id || null},
-        user_id = ${data.user_id || null}
-      WHERE id = ${id}
+    const result = await sql`
+      INSERT INTO transactions (
+        amount,
+        transaction_type,
+        status,
+        description,
+        date,
+        category
+      ) VALUES (
+        ${validatedData.amount},
+        ${validatedData.transaction_type},
+        ${validatedData.status},
+        ${validatedData.description},
+        ${validatedData.date},
+        ${validatedData.category}
+      )
+      RETURNING id
     `
-    return { success: true }
+
+    if (!result || !result[0]?.id) {
+      throw new Error("Failed to create transaction")
+    }
+
+    console.log("Successfully created transaction with ID:", result[0].id)
+    redirect("/transactions")
   } catch (error) {
-    return { error: error instanceof Error ? error.message : "Failed to update transaction" }
+    console.error("Error creating transaction:", error)
+    throw error
+  }
+}
+
+export async function updateTransaction(id: string, data: unknown) {
+  const session = await requireRole(["admin", "manager"])
+  await ensureSchema()
+
+  const validatedData = transactionSchema.parse(data)
+
+  try {
+    const result = await sql`
+      UPDATE transactions SET
+        amount = ${validatedData.amount},
+        transaction_type = ${validatedData.transaction_type},
+        status = ${validatedData.status},
+        description = ${validatedData.description},
+        date = ${validatedData.date},
+        category = ${validatedData.category},
+        updated_at = NOW()
+      WHERE id = ${id}
+      RETURNING id
+    `
+
+    if (!result || !result[0]?.id) {
+      throw new Error("Failed to update transaction")
+    }
+
+    redirect(`/transactions/${id}`)
+  } catch (error) {
+    console.error("Error updating transaction:", error)
+    throw error
   }
 }
 
@@ -68,8 +100,9 @@ export async function deleteTransaction(id: string) {
 
   try {
     await sql`DELETE FROM transactions WHERE id = ${id}`
-    return { success: true }
+    redirect("/transactions")
   } catch (error) {
-    return { error: error instanceof Error ? error.message : "Failed to delete transaction" }
+    console.error("Error deleting transaction:", error)
+    throw error
   }
 }

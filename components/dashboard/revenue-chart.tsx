@@ -22,7 +22,7 @@ const chartConfig = {
     label: "Expenses",
     color: "hsl(var(--chart-2))",
   },
-}
+} satisfies ChartConfig
 
 export function RevenueChart() {
   return (

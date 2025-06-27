@@ -21,7 +21,7 @@ export default async function OwnersPage() {
   `
 
   const getOwnershipColor = (type: string) => {
-    return type === "company" ? "bg-blue-100 text-blue-800" : "bg-green-100 text-green-800"
+    return type === "company" ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100" : "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100"
   }
 
   return (

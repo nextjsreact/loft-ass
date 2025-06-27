@@ -1,0 +1,313 @@
+
+> my-v0-project@0.1.0 dev
+> next dev
+
+Environment variables loaded - Database connection configured
+ ⚠ Warning: Found multiple lockfiles. Selecting C:\Users\SERVICE-INFO\package-lock.json.
+   Consider removing the lockfiles at:
+   * C:\Users\SERVICE-INFO\IA\loft-ass\pnpm-lock.yaml
+
+ ⚠ Port 3000 is in use by an unknown process, using available port 3001 instead.
+Environment variables loaded - Database connection configured
+   ▲ Next.js 15.4.0-canary.91
+   - Local:        http://localhost:3001
+   - Network:      http://192.168.132.74:3001
+   - Environments: .env
+
+ ✓ Starting...
+ ✓ Ready in 5.5s
+ ○ Compiling /middleware ...
+ ✓ Compiled /middleware in 13.1s (922 modules)
+Database connection established
+ ○ Compiling /dashboard ...
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ GET /_next/static/webpack/17f8361ebbdcf3a9.webpack.hot-update.json 404 in 14944ms
+ ⨯ ./app/dashboard/page.tsx
+Error:   [31mx[0m Unexpected token `div`. Expected jsx identifier
+    ,-[[36;1;4mC:\Users\SERVICE-INFO\IA\loft-ass\app\dashboard\page.tsx[0m:42:1]
+ [2m39[0m |     }))
+ [2m40[0m | 
+ [2m41[0m |     return (
+ [2m42[0m |       <div className="space-y-6">
+    : [35;1m       ^^^[0m
+ [2m43[0m |         <div>
+ [2m44[0m |           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+ [2m45[0m |           <p className="text-muted-foreground">Welcome back, {session.user.full_name}</p>
+    `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./app/dashboard/page.tsx
+ ⨯ ./app/dashboard/page.tsx
+Error:   [31mx[0m Unexpected token `div`. Expected jsx identifier
+    ,-[[36;1;4mC:\Users\SERVICE-INFO\IA\loft-ass\app\dashboard\page.tsx[0m:42:1]
+ [2m39[0m |     }))
+ [2m40[0m | 
+ [2m41[0m |     return (
+ [2m42[0m |       <div className="space-y-6">
+    : [35;1m       ^^^[0m
+ [2m43[0m |         <div>
+ [2m44[0m |           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+ [2m45[0m |           <p className="text-muted-foreground">Welcome back, {session.user.full_name}</p>
+    `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./app/dashboard/page.tsx
+ GET /_next/static/webpack/17f8361ebbdcf3a9.webpack.hot-update.json 500 in 4150ms
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ GET /dashboard 500 in 19ms
+ ✓ Compiled /_error in 439ms (480 modules)
+ GET /dashboard 500 in 23ms
+ ✓ Compiled in 443ms (480 modules)
+ GET /dashboard 500 in 22ms
+ ✓ Compiled in 395ms (480 modules)
+ GET /dashboard 500 in 21ms
+ ✓ Compiled in 416ms (480 modules)
+ GET /dashboard 500 in 24ms
+ ✓ Compiled in 399ms (480 modules)
+ GET /dashboard 500 in 22ms
+ ✓ Compiled in 405ms (480 modules)
+ GET /dashboard 500 in 114ms
+ ✓ Compiled in 395ms (480 modules)
+ GET /dashboard 500 in 18ms
+ ✓ Compiled in 514ms (480 modules)
+ GET /dashboard 500 in 18ms
+ ✓ Compiled in 333ms (480 modules)
+ GET /dashboard 500 in 18ms
+ ✓ Compiled in 355ms (480 modules)
+ GET /dashboard 500 in 17ms
+ ✓ Compiled in 1275ms (480 modules)
+ GET /dashboard 500 in 17ms
+ ✓ Compiled in 421ms (480 modules)
+ GET /dashboard 500 in 18ms
+ ✓ Compiled in 389ms (480 modules)
+ GET /dashboard 500 in 16ms
+ ✓ Compiled in 392ms (480 modules)
+ GET /dashboard 500 in 19ms
+ ✓ Compiled in 361ms (480 modules)
+ GET /dashboard 500 in 20ms
+ ✓ Compiled in 360ms (480 modules)
+ GET /dashboard 500 in 16ms
+ ✓ Compiled in 385ms (480 modules)
+ GET /dashboard 500 in 22ms
+ ✓ Compiled in 402ms (480 modules)
+ GET /dashboard 500 in 35ms
+ ✓ Compiled in 382ms (480 modules)
+ GET /dashboard 500 in 15ms
+ ✓ Compiled in 357ms (480 modules)
+ GET /dashboard 500 in 15ms
+ ✓ Compiled in 476ms (480 modules)
+ GET /dashboard 500 in 18ms
+ ✓ Compiled in 357ms (480 modules)
+ GET /dashboard 500 in 18ms
+ ✓ Compiled in 343ms (480 modules)
+ GET /dashboard 500 in 41ms
+ ✓ Compiled in 385ms (480 modules)
+ GET /dashboard 500 in 16ms
+ ✓ Compiled in 410ms (480 modules)
+ GET /dashboard 500 in 23ms
+ ✓ Compiled in 367ms (480 modules)
+ GET /dashboard 500 in 35ms
+ ✓ Compiled in 380ms (480 modules)
+ GET /dashboard 500 in 17ms
+ ✓ Compiled in 411ms (480 modules)
+ GET /dashboard 500 in 19ms
+ ✓ Compiled in 389ms (480 modules)
+ GET /dashboard 500 in 15ms
+ ✓ Compiled in 556ms (480 modules)
+ GET /dashboard 500 in 15ms
+ ✓ Compiled in 420ms (480 modules)
+ GET /dashboard 500 in 50ms
+ ✓ Compiled in 370ms (480 modules)
+ GET /dashboard 500 in 18ms
+ ✓ Compiled in 416ms (480 modules)
+ GET /dashboard 500 in 19ms
+ ✓ Compiled in 355ms (480 modules)
+ GET /dashboard 500 in 14ms
+ ✓ Compiled in 373ms (480 modules)
+ GET /dashboard 500 in 17ms
+ ✓ Compiled in 346ms (480 modules)
+ GET /dashboard 500 in 14ms
+ ✓ Compiled in 351ms (480 modules)
+ GET /dashboard 500 in 19ms
+ ✓ Compiled in 401ms (480 modules)
+ GET /dashboard 500 in 15ms
+ ✓ Compiled in 413ms (480 modules)
+ GET /dashboard 500 in 16ms
+ ✓ Compiled in 351ms (480 modules)
+ GET /dashboard 500 in 15ms
+ ✓ Compiled in 426ms (480 modules)
+ GET /dashboard 500 in 17ms
+ ✓ Compiled in 425ms (480 modules)
+ GET /dashboard 500 in 15ms
+ ✓ Compiled in 338ms (480 modules)
+ GET /dashboard 500 in 38ms
+ ✓ Compiled in 352ms (480 modules)
+ GET /dashboard 500 in 24ms
+ ✓ Compiled in 384ms (480 modules)
+ ✓ Compiled in 620ms (480 modules)
+ GET /dashboard 500 in 109ms
+ ✓ Compiled in 359ms (480 modules)
+ GET /dashboard 500 in 15ms
+ ✓ Compiled in 331ms (480 modules)
+ ✓ Compiled in 811ms (480 modules)
+ GET /dashboard 500 in 16ms
+ ✓ Compiled in 400ms (480 modules)
+ GET /dashboard 500 in 15ms
+ ✓ Compiled in 375ms (480 modules)
+ ✓ Compiled in 717ms (480 modules)
+ GET /dashboard 500 in 16ms
+ ✓ Compiled in 388ms (480 modules)
+ GET /dashboard 500 in 15ms
+ ✓ Compiled in 412ms (480 modules)
+ GET /dashboard 500 in 18ms
+ ✓ Compiled in 374ms (480 modules)
+ GET /dashboard 500 in 86ms
+ ✓ Compiled in 858ms (480 modules)
+ GET /dashboard 500 in 23ms
+ ✓ Compiled in 433ms (480 modules)
+ GET /dashboard 500 in 26ms
+ ✓ Compiled in 399ms (480 modules)
+ GET /dashboard 500 in 44ms
+ ✓ Compiled in 360ms (480 modules)
+ GET /dashboard 500 in 16ms
+ ✓ Compiled in 314ms (480 modules)
+ GET /dashboard 500 in 23ms
+ ✓ Compiled in 353ms (480 modules)
+ GET /dashboard 500 in 16ms
+ ✓ Compiled in 346ms (480 modules)
+ GET /dashboard 500 in 19ms
+ ✓ Compiled in 506ms (480 modules)
+ GET /dashboard 500 in 18ms
+ ✓ Compiled in 356ms (480 modules)
+ GET /dashboard 500 in 23ms
+ ✓ Compiled in 313ms (480 modules)
+ GET /dashboard 500 in 14ms
+ ✓ Compiled in 512ms (480 modules)
+ GET /dashboard 500 in 18ms
+ ✓ Compiled in 343ms (480 modules)
+ GET /dashboard 500 in 19ms
+ ✓ Compiled in 447ms (480 modules)
+ GET /dashboard 500 in 19ms
+ ✓ Compiled in 423ms (480 modules)
+ GET /dashboard 500 in 26ms
+ ✓ Compiled in 414ms (480 modules)
+ GET /dashboard 500 in 18ms
+ ✓ Compiled in 349ms (480 modules)
+ GET /dashboard 500 in 16ms
+ ✓ Compiled in 373ms (480 modules)
+ GET /dashboard 500 in 20ms
+ ✓ Compiled in 438ms (480 modules)
+ GET /dashboard 500 in 13ms
+ ✓ Compiled in 529ms (480 modules)
+ GET /dashboard 500 in 27ms
+ ✓ Compiled in 426ms (480 modules)
+ GET /dashboard 500 in 17ms
+ ✓ Compiled in 435ms (480 modules)
+ GET /dashboard 500 in 20ms
+ ✓ Compiled in 403ms (480 modules)
+ GET /dashboard 500 in 62ms
+ ✓ Compiled in 413ms (480 modules)
+ GET /dashboard 500 in 17ms
+ ✓ Compiled in 435ms (480 modules)
+ GET /dashboard 500 in 18ms
+ ✓ Compiled in 394ms (480 modules)
+ GET /dashboard 500 in 36ms
+ ✓ Compiled in 1003ms (480 modules)
+ GET /dashboard 500 in 18ms
+ ✓ Compiled in 497ms (480 modules)
+ GET /dashboard 500 in 19ms
+ ✓ Compiled in 413ms (480 modules)
+ GET /dashboard 500 in 19ms
+ ✓ Compiled in 460ms (480 modules)
+ GET /dashboard 500 in 15ms
+ ✓ Compiled in 673ms (480 modules)
+ GET /dashboard 500 in 164ms
+ ✓ Compiled in 395ms (480 modules)
+ GET /dashboard 500 in 17ms
+ ✓ Compiled in 437ms (480 modules)
+ GET /dashboard 500 in 16ms
+ ✓ Compiled in 425ms (480 modules)
+ GET /dashboard 500 in 14ms
+ ✓ Compiled in 548ms (480 modules)
+ GET /dashboard 500 in 29ms
+ ✓ Compiled in 419ms (480 modules)
+ GET /dashboard 500 in 16ms
+ ✓ Compiled in 512ms (480 modules)
+ GET /dashboard 500 in 20ms
+ ✓ Compiled in 467ms (480 modules)
+ GET /dashboard 500 in 116ms
+ ✓ Compiled in 465ms (480 modules)
+ GET /dashboard 500 in 17ms
+ ✓ Compiled in 418ms (480 modules)
+ GET /dashboard 500 in 19ms
+ ✓ Compiled in 908ms (480 modules)
+ GET /dashboard 500 in 30ms
+ ✓ Compiled in 414ms (480 modules)
+ GET /dashboard 500 in 17ms
+ ✓ Compiled in 535ms (480 modules)
+ GET /dashboard 500 in 170ms
+ ✓ Compiled in 364ms (480 modules)
+ GET /dashboard 500 in 16ms
+ ✓ Compiled in 790ms (480 modules)
+ ✓ Compiled in 998ms (480 modules)
+ GET /dashboard 500 in 19ms
+ ✓ Compiled in 630ms (480 modules)
+ GET /dashboard 500 in 22ms
+ ✓ Compiled in 509ms (480 modules)
+ GET /dashboard 500 in 15ms
+ ✓ Compiled in 418ms (480 modules)
+ GET /dashboard 500 in 17ms
+ ✓ Compiled in 377ms (480 modules)
+ GET /dashboard 500 in 17ms
+ ✓ Compiled in 364ms (480 modules)
+ GET /dashboard 500 in 15ms
+ ✓ Compiled in 455ms (480 modules)
+ GET /dashboard 500 in 19ms
+ ✓ Compiled in 660ms (480 modules)
+ GET /dashboard 500 in 17ms
+ ✓ Compiled in 600ms (480 modules)
+ GET /dashboard 500 in 28ms
+ ✓ Compiled in 377ms (480 modules)
+ GET /dashboard 500 in 17ms
+ ✓ Compiled in 322ms (480 modules)
+ GET /dashboard 500 in 15ms
+ ✓ Compiled in 382ms (480 modules)
+ GET /dashboard 500 in 26ms
+ ✓ Compiled in 377ms (480 modules)
+ GET /dashboard 500 in 16ms
+ ✓ Compiled in 396ms (480 modules)
+ GET /dashboard 500 in 19ms
+ ✓ Compiled in 1060ms (480 modules)
+ GET /dashboard 500 in 21ms
+ ✓ Compiled in 383ms (480 modules)
+ GET /dashboard 500 in 18ms
+ ✓ Compiled in 555ms (480 modules)
+ GET /dashboard 500 in 14ms
+ ✓ Compiled in 433ms (480 modules)
+ GET /dashboard 500 in 22ms
+ ✓ Compiled in 329ms (480 modules)
+ GET /dashboard 500 in 17ms
+ ✓ Compiled in 389ms (480 modules)
+ GET /dashboard 500 in 26ms
+ ✓ Compiled in 448ms (480 modules)
+ GET /dashboard 500 in 17ms
+ ✓ Compiled in 343ms (480 modules)
+ GET /dashboard 500 in 14ms
+ ✓ Compiled in 383ms (480 modules)
+ GET /dashboard 500 in 20ms
+ ✓ Compiled in 345ms (480 modules)
+ GET /dashboard 500 in 19ms
+ ✓ Compiled in 346ms (480 modules)
+ GET /dashboard 500 in 14ms
+ ✓ Compiled in 476ms (480 modules)
+ GET /dashboard 500 in 23ms
+ ✓ Compiled in 449ms (480 modules)
+ GET /dashboard 500 in 32ms
+ ✓ Compiled in 368ms (480 modules)
+ GET /dashboard 500 in 16ms

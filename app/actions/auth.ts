@@ -2,98 +2,70 @@ import { User, UserRole, Loft, LoftStatus, sql } from "@/lib/database"
 
 export async function ensureAuthTables() {
   try {
-    // First attempt to insert dummy data to check if tables exist
-    const { error: userError } = await sql`
-      INSERT INTO users (email, password_hash, full_name)
-      VALUES ('dummy@example.com', 'dummy', 'Dummy')
-      ON CONFLICT DO NOTHING
-    `
+    const tableChecks = await Promise.all([
+      sql`SELECT EXISTS (SELECT 1 FROM pg_catalog.pg_tables WHERE tablename = 'users') as exists_users`,
+      sql`SELECT EXISTS (SELECT 1 FROM pg_catalog.pg_tables WHERE tablename = 'loft_owners') as exists_loft_owners`,
+      sql`SELECT EXISTS (SELECT 1 FROM pg_catalog.pg_tables WHERE tablename = 'lofts') as exists_lofts`,
+    ]);
 
-    const { error: ownerError } = await sql`
-      INSERT INTO loft_owners (name, email, ownership_type)
-      VALUES ('Dummy Owner', 'owner@example.com', 'company')
-      ON CONFLICT DO NOTHING
-    `
+    const [usersExists, loftOwnersExists, loftsExists] = tableChecks.map(res => res[0].exists);
 
-    const { error: loftError } = await sql`
-      INSERT INTO lofts (name, address, price_per_month, status)
-      VALUES ('Sample Loft', '123 Main St', 1000, 'available')
-      ON CONFLICT DO NOTHING
-    `
+    if (!usersExists) {
+      await sql`
+        CREATE TABLE users (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          email TEXT NOT NULL UNIQUE,
+          password_hash TEXT NOT NULL,
+          full_name TEXT,
+          role TEXT NOT NULL DEFAULT 'member',
+          email_verified BOOLEAN DEFAULT false,
+          reset_token TEXT,
+          reset_token_expires TIMESTAMPTZ,
+          last_login TIMESTAMPTZ,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+          updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )
+      `;
+      console.log('Created users table');
+    }
 
-    if (userError || ownerError) {
-      // Check if errors indicate missing tables
-      // Handle missing users table
-      if (userError?.message?.includes?.('relation "users" does not exist')) {
-        await sql`
-          CREATE TABLE users (
-            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            email TEXT NOT NULL UNIQUE,
-            password_hash TEXT NOT NULL,
-            full_name TEXT,
-            role TEXT NOT NULL DEFAULT 'member',
-            email_verified BOOLEAN DEFAULT false,
-            reset_token TEXT,
-            reset_token_expires TIMESTAMPTZ,
-            last_login TIMESTAMPTZ,
-            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-          )
-        `
-        console.log('Created users table')
-      }
+    if (!loftOwnersExists) {
+      await sql`
+        CREATE TABLE loft_owners (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          name TEXT NOT NULL,
+          email TEXT,
+          phone TEXT,
+          address TEXT,
+          ownership_type TEXT NOT NULL,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+          updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )
+      `;
+      console.log('Created loft_owners table');
+    }
 
-      // Handle missing loft_owners table  
-      if (ownerError?.message?.includes?.('relation "loft_owners" does not exist')) {
-        await sql`
-          CREATE TABLE loft_owners (
-            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            name TEXT NOT NULL,
-            email TEXT,
-            phone TEXT,
-            address TEXT,
-            ownership_type TEXT NOT NULL,
-            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-          )
-        `
-        console.log('Created loft_owners table')
-      }
-
-      if (userError && !userError.message?.includes?.('relation "users" does not exist')) {
-        throw userError
-      }
-      if (ownerError && !ownerError.message?.includes?.('relation "loft_owners" does not exist')) {
-        throw ownerError
-      }
-
-      // Handle missing lofts table
-      if (loftError?.message?.includes?.('relation "lofts" does not exist')) {
-        await sql`
-          CREATE TABLE lofts (
-            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            name TEXT NOT NULL,
-            description TEXT,
-            address TEXT NOT NULL,
-            price_per_month DECIMAL NOT NULL,
-            status TEXT NOT NULL,
-            owner_id UUID REFERENCES loft_owners(id),
-            company_percentage DECIMAL NOT NULL,
-            owner_percentage DECIMAL NOT NULL,
-            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-          )
-        `
-        console.log('Created lofts table')
-      }
-
-      if (loftError && !loftError.message?.includes?.('relation "lofts" does not exist')) {
-        throw loftError
-      }
+    if (!loftsExists) {
+      await sql`
+        CREATE TABLE lofts (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          name TEXT NOT NULL,
+          description TEXT,
+          address TEXT NOT NULL,
+          price_per_month DECIMAL NOT NULL,
+          status TEXT NOT NULL,
+          owner_id UUID REFERENCES loft_owners(id),
+          company_percentage DECIMAL NOT NULL,
+          owner_percentage DECIMAL NOT NULL,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+          updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )
+      `;
+      console.log('Created lofts table');
     }
   } catch (error) {
-    console.error('Error ensuring auth tables exist:', error)
-    throw error
+    console.error('Error ensuring auth tables exist:', error);
+    throw error;
   }
 }
 

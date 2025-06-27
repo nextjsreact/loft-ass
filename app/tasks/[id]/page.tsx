@@ -1,64 +1,59 @@
-import { sql } from "@/lib/database"
+import { requireRole } from "@/lib/auth"
+import { getTask, deleteTask } from "@/app/actions/tasks"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { format } from "date-fns"
+import { Button } from "@/components/ui/button"
+import Link from "next/link"
+import { notFound } from "next/navigation"
 
-export const revalidate = 0 // Disable caching
-
-export default async function TaskView({ params }: { params: { id: string } }) {
-  const [task] = await sql`
-    SELECT t.*, 
-           u.full_name as assigned_user_name,
-           l.name as loft_name,
-           tm.name as team_name
-    FROM tasks t
-    LEFT JOIN users u ON t.assigned_to = u.id
-    LEFT JOIN lofts l ON t.loft_id = l.id
-    LEFT JOIN teams tm ON t.team_id = tm.id
-    WHERE t.id = ${params.id}
-    LIMIT 1
-  `
+export default async function TaskPage({ params }: { params: { id: string } }) {
+  const session = await requireRole(["admin", "manager"])
+  const task = await getTask(params.id)
 
   if (!task) {
-    return <div>Task not found</div>
+    notFound()
+  }
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "todo":
+        return "bg-gray-100 text-gray-800"
+      case "in_progress":
+        return "bg-blue-100 text-blue-800"
+      case "completed":
+        return "bg-green-100 text-green-800"
+      default:
+        return "bg-gray-100 text-gray-800"
+    }
   }
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">{task.title}</h1>
-        <p className="text-muted-foreground">Task Details</p>
-      </div>
-
       <Card>
         <CardHeader>
-          <CardTitle>Task Information</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <h3 className="text-sm font-medium text-muted-foreground">Status</h3>
-            <Badge className={
-              task.status === "completed" ? "bg-green-100 text-green-800" :
-              task.status === "in_progress" ? "bg-blue-100 text-blue-800" :
-              "bg-gray-100 text-gray-800"
-            }>
-              {task.status.replace("_", " ")}
-            </Badge>
+          <div className="flex justify-between items-start">
+            <div>
+              <CardTitle className="text-2xl">{task.title}</CardTitle>
+              <CardDescription>{task.due_date ? `Due by ${new Date(task.due_date).toLocaleDateString()}` : "No due date"}</CardDescription>
+            </div>
+            <Badge className={getStatusColor(task.status)}>{task.status}</Badge>
           </div>
-
-          {task.description && (
-            <div>
-              <h3 className="text-sm font-medium text-muted-foreground">Description</h3>
-              <p className="whitespace-pre-wrap">{task.description}</p>
-            </div>
-          )}
-
-          {task.due_date && (
-            <div>
-              <h3 className="text-sm font-medium text-muted-foreground">Due Date</h3>
-              <p>{format(new Date(task.due_date), "MMM d, yyyy")}</p>
-            </div>
-          )}
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground">{task.description}</p>
+          <div className="mt-6 flex gap-4">
+            {session.user.role === "admin" && (
+              <form action={async () => { "use server"; await deleteTask(task.id) }}>
+                <Button variant="destructive">Delete</Button>
+              </form>
+            )}
+            <Button asChild variant="outline">
+              <Link href={`/tasks/${task.id}/edit`}>Edit Task</Link>
+            </Button>
+            <Button asChild>
+              <Link href="/tasks">Back to Tasks</Link>
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>

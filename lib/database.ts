@@ -16,6 +16,12 @@ if (typeof window === 'undefined') {
   }
 }
 
+export function createAuthenticatedClient(token: string) {
+  // This is a placeholder. In a real application, you would use the
+  // token to create a new database client with the user's permissions.
+  return sql;
+}
+
 export { sql }
 
 let _schemaInitialized = false

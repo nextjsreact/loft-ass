@@ -8,11 +8,13 @@ import { cn } from "@/lib/utils"
 import type { User } from "@/lib/database"
 import { logout } from "@/lib/auth"
 
-interface SidebarProps {
+import { ThemeToggle } from "@/components/theme-toggle"
+
+interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
   user: User
 }
 
-export function Sidebar({ user }: SidebarProps) {
+export function Sidebar({ user, className }: SidebarProps) {
   const pathname = usePathname()
 
   const navigation = [
@@ -24,15 +26,19 @@ export function Sidebar({ user }: SidebarProps) {
     { name: "Transactions", href: "/transactions", icon: DollarSign, roles: ["admin", "manager"] },
     { name: "Reports", href: "/reports", icon: Calendar, roles: ["admin", "manager"] },
     { name: "Settings", href: "/settings", icon: Settings, roles: ["admin", "manager", "member"] },
+    { name: "Categories", href: "/settings/categories", icon: ClipboardList, roles: ["admin"] },
   ]
 
   const filteredNavigation = navigation.filter((item) => item.roles.includes(user.role))
 
   return (
-    <div className="flex h-full w-64 flex-col bg-gray-900">
-      <div className="flex h-16 shrink-0 items-center px-4">
-        <Building2 className="h-8 w-8 text-white" />
-        <span className="ml-2 text-xl font-semibold text-white">LoftManager</span>
+    <div className={cn("flex h-full w-64 flex-col bg-gray-900", className)}>
+      <div className="flex h-16 shrink-0 items-center justify-between px-4">
+        <Link href="/dashboard" className="flex items-center">
+          <Building2 className="h-8 w-8 text-white" />
+          <span className="ml-2 text-xl font-semibold text-white">LoftManager</span>
+        </Link>
+        <ThemeToggle />
       </div>
 
       <nav className="flex-1 space-y-1 px-2 py-4">
@@ -79,3 +85,4 @@ export function Sidebar({ user }: SidebarProps) {
     </div>
   )
 }
+

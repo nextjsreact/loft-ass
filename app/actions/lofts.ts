@@ -5,6 +5,12 @@ import { sql, ensureSchema } from "@/lib/database"
 import { redirect } from "next/navigation"
 import type { Loft } from "@/lib/types"
 
+export async function getLofts() {
+  await ensureSchema()
+  const lofts = await sql`SELECT id, name FROM lofts ORDER BY name`
+  return lofts
+}
+
 export async function deleteLoft(id: string) {
   console.log("Attempting to delete loft with ID:", id)
   const session = await requireRole(["admin"])

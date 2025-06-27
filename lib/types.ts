@@ -1,23 +1,34 @@
+export interface Task {
+  id: string;
+  title: string;
+  description?: string;
+  status: 'todo' | 'in_progress' | 'completed';
+  due_date?: Date | string; // Allow due_date to be a string or Date object
+  assigned_to?: string;
+  team_id?: string;
+  loft_id?: string;
+  created_by: string;
+  created_at: Date;
+  updated_at: Date;
+}
+
 export interface LoftOwner {
-  id: string
-  name: string
-  ownership_type: "company" | "third_party"
-  created_at: string
-  updated_at: string
+  id: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  address: string | null;
+  ownership_type: string;
 }
 
-export interface Loft {
-  id: string
-  name: string
-  description?: string
-  address: string
-  price_per_month: number
-  status: "available" | "occupied" | "maintenance"
-  owner_id: string
-  company_percentage: number
-  owner_percentage: number
-  created_at: string
-  updated_at: string
+export interface Transaction {
+  id: string;
+  amount: number;
+  transaction_type: 'income' | 'expense';
+  status: 'pending' | 'completed' | 'failed';
+  description?: string;
+  date: Date;
+  category?: string;
+  created_at: Date;
+  updated_at: Date;
 }
-
-export default {}
