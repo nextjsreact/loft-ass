@@ -68,6 +68,7 @@ export default async function DashboardPage() {
       </div>
     )
   } catch (error) {
+    console.error('Dashboard error:', error)
     return (
       <div className="space-y-6">
         <div>
