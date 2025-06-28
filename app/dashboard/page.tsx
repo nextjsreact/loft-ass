@@ -3,12 +3,12 @@ import { sql, ensureSchema } from "@/lib/database"
 import { StatsCards } from "@/components/dashboard/stats-cards"
 import { RevenueChart } from "@/components/dashboard/revenue-chart"
 import { RecentTasks } from "@/components/dashboard/recent-tasks"
-import { Task as BaseTask } from "@/lib/types" // Import the base Task interface
+import { Task as BaseTask } from "@/lib/types"
 
 interface RecentTask extends BaseTask {
   assigned_user_name: string | null;
   loft_name: string | null;
-  due_date?: Date; // Ensure due_date is a Date object for this component
+  due_date?: Date;
 }
 
 export default async function DashboardPage() {
@@ -41,10 +41,10 @@ export default async function DashboardPage() {
 
     const recentTasks = recentTasksResult.map((task: BaseTask & { assigned_user_name: string | null; loft_name: string | null; }) => ({
       ...task,
-      due_date: task.due_date ? new Date(task.due_date) : undefined, // Convert due_date to Date object
+      due_date: task.due_date ? new Date(task.due_date) : undefined,
       assigned_user: task.assigned_user_name ? { full_name: task.assigned_user_name } : null,
       loft: task.loft_name ? { name: task.loft_name } : null,
-    })) as RecentTask[] // Cast the result to RecentTask[]
+    })) as RecentTask[]
 
     return (
       <div className="space-y-6">
