@@ -20,12 +20,14 @@ export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const [isDiagnosing, setIsDiagnosing] = useState(false)
+  const [lastAttemptedEmail, setLastAttemptedEmail] = useState("")
   const router = useRouter()
 
   const {
     register,
     handleSubmit,
     formState: { errors },
+    getValues,
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
   })
@@ -43,9 +45,15 @@ export function LoginForm() {
       console.log('Diagnosis result:', result)
       
       if (result.status === 'password_created' || result.status === 'password_recreated') {
-        setError(`${result.message}. Please try logging in again.`)
+        setError(`${result.message}. Please try logging in again with password: password123`)
       } else if (result.status === 'user_not_found') {
         setError('User not found. Please check your email or contact support.')
+      } else if (result.status === 'diagnosis_complete') {
+        if (result.user.passwordVerificationTest) {
+          setError('User is properly configured. Try logging in again.')
+        } else {
+          setError('Password issue detected and fixed. Try logging in again.')
+        }
       } else {
         setError(result.message || 'Diagnosis completed. Check console for details.')
       }
@@ -59,6 +67,7 @@ export function LoginForm() {
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true)
     setError("")
+    setLastAttemptedEmail(data.email)
 
     try {
       const result = await login(data.email, data.password)
@@ -131,18 +140,15 @@ export function LoginForm() {
             {isLoading ? "Signing in..." : "Sign In"}
           </Button>
           
-          {error && (
+          {error && lastAttemptedEmail && (
             <Button 
               type="button" 
               variant="outline" 
               className="w-full" 
-              onClick={() => {
-                const emailValue = (document.getElementById('email') as HTMLInputElement)?.value
-                if (emailValue) diagnoseLogin(emailValue)
-              }}
+              onClick={() => diagnoseLogin(lastAttemptedEmail)}
               disabled={isDiagnosing}
             >
-              {isDiagnosing ? "Diagnosing..." : "Diagnose Login Issue"}
+              {isDiagnosing ? "Diagnosing..." : "🔧 Diagnose Login Issue"}
             </Button>
           )}
         </form>
