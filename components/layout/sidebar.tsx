@@ -31,6 +31,15 @@ export function Sidebar({ user, className }: SidebarProps) {
 
   const filteredNavigation = navigation.filter((item) => item.roles.includes(user.role))
 
+  const handleLogout = () => {
+    // In development mode, just redirect to login without actual logout
+    if (process.env.NODE_ENV === 'development') {
+      window.location.href = '/login'
+    } else {
+      logout()
+    }
+  }
+
   return (
     <div className={cn("flex h-full w-64 flex-col bg-gray-900", className)}>
       <div className="flex h-16 shrink-0 items-center justify-between px-4">
@@ -70,13 +79,16 @@ export function Sidebar({ user, className }: SidebarProps) {
           <div className="ml-3">
             <p className="text-sm font-medium text-white">{user.full_name}</p>
             <p className="text-xs text-gray-400 capitalize">{user.role}</p>
+            {process.env.NODE_ENV === 'development' && (
+              <p className="text-xs text-green-400">DEV MODE</p>
+            )}
           </div>
         </div>
         <Button
           variant="ghost"
           size="sm"
           className="mt-2 w-full justify-start text-gray-300 hover:text-white hover:bg-gray-700"
-          onClick={() => logout()}
+          onClick={handleLogout}
         >
           <LogOut className="mr-2 h-4 w-4" />
           Sign out
@@ -85,4 +97,3 @@ export function Sidebar({ user, className }: SidebarProps) {
     </div>
   )
 }
-

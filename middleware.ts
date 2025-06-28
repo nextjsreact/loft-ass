@@ -2,6 +2,12 @@ import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
 export function middleware(request: NextRequest) {
+  // DEVELOPMENT MODE: Bypass all authentication
+  if (process.env.NODE_ENV === 'development') {
+    console.log('🚀 Development mode: Authentication bypassed')
+    return NextResponse.next()
+  }
+
   const { pathname } = request.nextUrl
   const token = request.cookies.get("auth-token")?.value
 

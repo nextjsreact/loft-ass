@@ -41,7 +41,27 @@ async function createSession(userId: string): Promise<string> {
   return token
 }
 
+// DEVELOPMENT MODE: Mock user for bypassed authentication
+const DEV_MOCK_USER: User = {
+  id: "dev-user-123",
+  email: "dev@loftmanager.com",
+  full_name: "Development User",
+  role: "admin",
+  email_verified: true,
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString()
+}
+
 export async function getSession(): Promise<AuthSession | null> {
+  // DEVELOPMENT MODE: Return mock session
+  if (process.env.NODE_ENV === 'development') {
+    console.log('🚀 Development mode: Using mock authentication session')
+    return {
+      user: DEV_MOCK_USER,
+      token: "dev-token-123"
+    }
+  }
+
   try {
     await ensureSchema()
     const cookieStore = await cookies()

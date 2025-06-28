@@ -19,6 +19,9 @@ export function Header({ user }: HeaderProps) {
       <Link href="/dashboard" className="flex items-center">
         <Building2 className="h-8 w-8 text-white" />
         <span className="ml-2 text-xl font-semibold text-white">LoftManager</span>
+        {process.env.NODE_ENV === 'development' && (
+          <span className="ml-2 text-xs bg-green-600 text-white px-2 py-1 rounded">DEV</span>
+        )}
       </Link>
       <div className="flex items-center gap-4">
         <ThemeToggle />
