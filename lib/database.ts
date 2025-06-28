@@ -12,7 +12,15 @@ if (typeof window === 'undefined') {
       throw new Error('Database connection string not configured')
     }
     
+    // Validate connection string format
+    if (!connectionString.startsWith('postgresql://') && !connectionString.startsWith('postgres://')) {
+      console.error('Invalid DATABASE_URL format. Expected postgresql:// or postgres://')
+      throw new Error('Invalid database connection string format')
+    }
+    
     console.log('Initializing database connection...')
+    console.log('Connection string format:', connectionString.substring(0, 20) + '...')
+    
     sql = neon(connectionString)
     console.log('Database connection initialized successfully')
     
@@ -38,6 +46,12 @@ export async function ensureSchema() {
   _schemaInitialized = true
 
   try {
+    console.log('Testing database connection...')
+    
+    // Test connection with a simple query first
+    await sql`SELECT 1 as test`
+    console.log('Database connection test successful')
+    
     console.log('Ensuring database schema...')
     
     // Create user_role enum
@@ -172,7 +186,38 @@ export async function ensureSchema() {
     console.log('Database schema ensured successfully')
   } catch (error) {
     console.error('Schema initialization failed:', error)
+    
+    // Reset the flag so it can be retried
+    _schemaInitialized = false
+    
+    // Provide more specific error information
+    if (error instanceof Error) {
+      if (error.message.includes('fetch failed')) {
+        console.error('Network connection to database failed. Please check:')
+        console.error('1. DATABASE_URL is correct in your .env file')
+        console.error('2. Your Neon database is active and accessible')
+        console.error('3. Network connectivity to neon.tech')
+      }
+    }
+    
     throw error
+  }
+}
+
+// Helper function to test database connectivity
+export async function testDatabaseConnection(): Promise<boolean> {
+  if (!sql) {
+    console.error('Database not initialized')
+    return false
+  }
+  
+  try {
+    await sql`SELECT 1 as test`
+    console.log('Database connection test passed')
+    return true
+  } catch (error) {
+    console.error('Database connection test failed:', error)
+    return false
   }
 }
 
