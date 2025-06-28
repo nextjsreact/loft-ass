@@ -8,8 +8,25 @@ if (typeof window === 'undefined') {
     if (!dbConfig.connectionString) {
       throw new Error('Database connection string not configured')
     }
+    
+    // Initialize Neon connection
     sql = neon(dbConfig.connectionString)
-    console.log('Database connection established')
+    console.log('Database connection initialized')
+    
+    // Test the connection immediately
+    sql`SELECT 1 as test`
+      .then((result: any) => {
+        if (result && result[0] && result[0].test === 1) {
+          console.log('Database connection verified successfully')
+        }
+      })
+      .catch((error: any) => {
+        console.error('Database connection test failed:', error.message)
+        if (error.message?.includes('fetch failed')) {
+          console.error('This usually indicates network connectivity issues or incorrect DATABASE_URL')
+        }
+      })
+    
   } catch (error) {
     console.error('Failed to initialize database:', error)
     throw error
@@ -26,9 +43,18 @@ let _schemaInitialized = false
 
 export async function ensureSchema() {
   if (_schemaInitialized || typeof window !== 'undefined') return
+  
+  // Don't initialize schema if sql is not available
+  if (!sql) {
+    console.warn('Database connection not available, skipping schema initialization')
+    return
+  }
+  
   _schemaInitialized = true
 
   try {
+    console.log('Starting database schema initialization...')
+    
     // Create user_role enum if it doesn't exist
     await sql`
       DO $$ BEGIN
@@ -210,6 +236,8 @@ export async function ensureSchema() {
     console.log('Database schema initialized successfully')
   } catch (error) {
     console.error('Schema initialization failed:', error)
+    // Don't throw the error to prevent app from crashing
+    // The connection test API will help diagnose the issue
   }
 }
 
