@@ -19,6 +19,7 @@ export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
+  const [isDiagnosing, setIsDiagnosing] = useState(false)
   const router = useRouter()
 
   const {
@@ -28,6 +29,32 @@ export function LoginForm() {
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
   })
+
+  const diagnoseLogin = async (email: string) => {
+    setIsDiagnosing(true)
+    try {
+      const response = await fetch('/api/diagnose-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      })
+      
+      const result = await response.json()
+      console.log('Diagnosis result:', result)
+      
+      if (result.status === 'password_created' || result.status === 'password_recreated') {
+        setError(`${result.message}. Please try logging in again.`)
+      } else if (result.status === 'user_not_found') {
+        setError('User not found. Please check your email or contact support.')
+      } else {
+        setError(result.message || 'Diagnosis completed. Check console for details.')
+      }
+    } catch (err) {
+      setError('Failed to diagnose login issue')
+    } finally {
+      setIsDiagnosing(false)
+    }
+  }
 
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true)
@@ -103,6 +130,21 @@ export function LoginForm() {
           <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading ? "Signing in..." : "Sign In"}
           </Button>
+          
+          {error && (
+            <Button 
+              type="button" 
+              variant="outline" 
+              className="w-full" 
+              onClick={() => {
+                const emailValue = (document.getElementById('email') as HTMLInputElement)?.value
+                if (emailValue) diagnoseLogin(emailValue)
+              }}
+              disabled={isDiagnosing}
+            >
+              {isDiagnosing ? "Diagnosing..." : "Diagnose Login Issue"}
+            </Button>
+          )}
         </form>
 
         <Separator />
