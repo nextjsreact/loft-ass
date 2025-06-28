@@ -103,32 +103,19 @@ export async function login(email: string, password: string): Promise<{ success:
     console.log('Login attempt for:', email)
     await ensureSchema()
 
-    // First, let's check if the user exists
     const users = await sql`
       SELECT id, email, full_name, role, password_hash, email_verified
       FROM users 
       WHERE email = ${email}
     `
 
-    console.log('User lookup result:', users.length > 0 ? 'User found' : 'User not found')
-
     if (users.length === 0) {
       return { success: false, error: "Invalid email or password" }
     }
 
     const user = users[0]
-    console.log('User data:', { 
-      id: user.id, 
-      email: user.email, 
-      role: user.role, 
-      hasPassword: !!user.password_hash,
-      emailVerified: user.email_verified 
-    })
 
-    // Check if user has a password hash
     if (!user.password_hash) {
-      console.log('User has no password hash, creating one...')
-      // If no password hash exists, create one with the default password
       const hashedPassword = await hashPassword('password123')
       await sql`
         UPDATE users 
@@ -137,24 +124,19 @@ export async function login(email: string, password: string): Promise<{ success:
       `
       user.password_hash = hashedPassword
       user.email_verified = true
-      console.log('Password hash created for user')
     }
 
     if (!user.email_verified) {
       return { success: false, error: "Please verify your email address" }
     }
 
-    console.log('Verifying password...')
     const isValidPassword = await verifyPassword(password, user.password_hash)
-    console.log('Password verification result:', isValidPassword)
     
     if (!isValidPassword) {
       return { success: false, error: "Invalid email or password" }
     }
 
-    console.log('Creating session...')
     const token = await createSession(user.id)
-    console.log('Session created, setting cookie...')
 
     const cookieStore = await cookies()
     cookieStore.set("auth-token", token, {
@@ -165,7 +147,6 @@ export async function login(email: string, password: string): Promise<{ success:
       path: "/",
     })
 
-    console.log('Login successful for:', email)
     return { success: true }
   } catch (error) {
     console.error('Login error:', error)
@@ -179,43 +160,25 @@ export async function register(
   fullName: string,
   role = "member",
 ): Promise<{ success: boolean; error?: string }> {
-  const startTime = Date.now()
-  
   try {
-    console.log(`[${Date.now() - startTime}ms] Registration attempt for:`, email, 'with role:', role)
+    console.log('Registration started for:', email)
     
-    // Test database connection first
-    console.log(`[${Date.now() - startTime}ms] Testing database connection...`)
-    const connectionTest = await sql`SELECT 1 as test`
-    if (!connectionTest || connectionTest[0]?.test !== 1) {
-      throw new Error('Database connection failed')
-    }
-    console.log(`[${Date.now() - startTime}ms] Database connection verified`)
-    
-    // Ensure database schema exists
-    console.log(`[${Date.now() - startTime}ms] Ensuring schema...`)
+    // Ensure database is ready
     await ensureSchema()
-    console.log(`[${Date.now() - startTime}ms] Schema ensured`)
-
-    // Check if user already exists
-    console.log(`[${Date.now() - startTime}ms] Checking if user exists...`)
+    
+    // Check if user exists
     const existingUsers = await sql`
       SELECT id FROM users WHERE email = ${email}
     `
-    console.log(`[${Date.now() - startTime}ms] User existence check complete: ${existingUsers.length} found`)
 
     if (existingUsers.length > 0) {
-      console.log(`[${Date.now() - startTime}ms] User already exists:`, email)
       return { success: false, error: "User with this email already exists" }
     }
 
-    // Hash the password
-    console.log(`[${Date.now() - startTime}ms] Hashing password...`)
+    // Hash password
     const passwordHash = await hashPassword(password)
-    console.log(`[${Date.now() - startTime}ms] Password hashed successfully`)
 
-    // Create the user
-    console.log(`[${Date.now() - startTime}ms] Creating user in database...`)
+    // Create user
     const newUsers = await sql`
       INSERT INTO users (email, full_name, role, password_hash, email_verified)
       VALUES (${email}, ${fullName}, ${role}, ${passwordHash}, true)
@@ -223,24 +186,16 @@ export async function register(
     `
 
     if (!newUsers || newUsers.length === 0) {
-      console.error(`[${Date.now() - startTime}ms] Failed to create user - no result returned`)
-      return { success: false, error: "Failed to create user account" }
+      throw new Error("Failed to create user")
     }
 
     const newUser = newUsers[0]
-    console.log(`[${Date.now() - startTime}ms] User created successfully:`, { 
-      id: newUser.id, 
-      email: newUser.email, 
-      role: newUser.role 
-    })
+    console.log('User created successfully:', newUser.id)
 
     // Create session
-    console.log(`[${Date.now() - startTime}ms] Creating session for new user...`)
     const token = await createSession(newUser.id)
-    console.log(`[${Date.now() - startTime}ms] Session created successfully`)
 
     // Set cookie
-    console.log(`[${Date.now() - startTime}ms] Setting authentication cookie...`)
     const cookieStore = await cookies()
     cookieStore.set("auth-token", token, {
       httpOnly: true,
@@ -250,28 +205,17 @@ export async function register(
       path: "/",
     })
 
-    console.log(`[${Date.now() - startTime}ms] Registration completed successfully for:`, email)
+    console.log('Registration completed successfully for:', email)
     return { success: true }
-  } catch (error) {
-    console.error(`[${Date.now() - startTime}ms] Registration error:`, error)
     
-    // Provide more specific error messages
-    if (error instanceof Error) {
-      if (error.message.includes('duplicate key') || error.message.includes('unique constraint')) {
-        return { success: false, error: "User with this email already exists" }
-      }
-      if (error.message.includes('connection') || error.message.includes('fetch failed')) {
-        return { success: false, error: "Database connection error. Please check your internet connection and try again." }
-      }
-      if (error.message.includes('timeout')) {
-        return { success: false, error: "Request timed out. Please try again." }
-      }
-      if (error.message.includes('permission') || error.message.includes('authentication')) {
-        return { success: false, error: "Database authentication error. Please contact support." }
-      }
+  } catch (error: any) {
+    console.error('Registration error:', error)
+    
+    if (error.message?.includes('duplicate key') || error.message?.includes('unique constraint')) {
+      return { success: false, error: "User with this email already exists" }
     }
     
-    return { success: false, error: `Registration failed: ${error instanceof Error ? error.message : 'Unknown error'}` }
+    return { success: false, error: `Registration failed: ${error.message}` }
   }
 }
 

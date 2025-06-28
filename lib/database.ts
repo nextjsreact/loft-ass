@@ -1,31 +1,20 @@
 import { neon } from "@neondatabase/serverless"
-import { dbConfig } from "./db-config"
 
 let sql: any = null
 
+// Initialize database connection
 if (typeof window === 'undefined') {
   try {
-    if (!dbConfig.connectionString) {
+    const connectionString = process.env.DATABASE_URL
+    
+    if (!connectionString) {
+      console.error('DATABASE_URL environment variable is missing')
       throw new Error('Database connection string not configured')
     }
     
-    // Initialize Neon connection
-    sql = neon(dbConfig.connectionString)
-    console.log('Database connection initialized')
-    
-    // Test the connection immediately
-    sql`SELECT 1 as test`
-      .then((result: any) => {
-        if (result && result[0] && result[0].test === 1) {
-          console.log('Database connection verified successfully')
-        }
-      })
-      .catch((error: any) => {
-        console.error('Database connection test failed:', error.message)
-        if (error.message?.includes('fetch failed')) {
-          console.error('This usually indicates network connectivity issues or incorrect DATABASE_URL')
-        }
-      })
+    console.log('Initializing database connection...')
+    sql = neon(connectionString)
+    console.log('Database connection initialized successfully')
     
   } catch (error) {
     console.error('Failed to initialize database:', error)
@@ -42,50 +31,19 @@ export { sql }
 let _schemaInitialized = false
 
 export async function ensureSchema() {
-  if (_schemaInitialized || typeof window !== 'undefined') return
-  
-  // Don't initialize schema if sql is not available
-  if (!sql) {
-    console.warn('Database connection not available, skipping schema initialization')
+  if (_schemaInitialized || typeof window !== 'undefined' || !sql) {
     return
   }
   
   _schemaInitialized = true
 
   try {
-    console.log('Starting database schema initialization...')
+    console.log('Ensuring database schema...')
     
-    // Create user_role enum if it doesn't exist
+    // Create user_role enum
     await sql`
       DO $$ BEGIN
         CREATE TYPE user_role AS ENUM ('admin', 'manager', 'member');
-      EXCEPTION
-        WHEN duplicate_object THEN null;
-      END $$;
-    `
-
-    // Create task_status enum if it doesn't exist
-    await sql`
-      DO $$ BEGIN
-        CREATE TYPE task_status AS ENUM ('todo', 'in_progress', 'completed');
-      EXCEPTION
-        WHEN duplicate_object THEN null;
-      END $$;
-    `
-
-    // Create loft_status enum if it doesn't exist
-    await sql`
-      DO $$ BEGIN
-        CREATE TYPE loft_status AS ENUM ('available', 'occupied', 'maintenance');
-      EXCEPTION
-        WHEN duplicate_object THEN null;
-      END $$;
-    `
-
-    // Create transaction_status enum if it doesn't exist
-    await sql`
-      DO $$ BEGIN
-        CREATE TYPE transaction_status AS ENUM ('pending', 'completed', 'failed');
       EXCEPTION
         WHEN duplicate_object THEN null;
       END $$;
@@ -99,7 +57,7 @@ export async function ensureSchema() {
         full_name TEXT,
         role user_role NOT NULL DEFAULT 'member',
         password_hash TEXT,
-        email_verified BOOLEAN DEFAULT false,
+        email_verified BOOLEAN DEFAULT true,
         reset_token TEXT,
         reset_token_expires TIMESTAMPTZ,
         last_login TIMESTAMPTZ,
@@ -120,31 +78,7 @@ export async function ensureSchema() {
       )
     `
 
-    // Create teams table
-    await sql`
-      CREATE TABLE IF NOT EXISTS teams (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        name TEXT NOT NULL,
-        description TEXT,
-        created_by UUID REFERENCES users(id),
-        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-      )
-    `
-
-    // Create team_members table
-    await sql`
-      CREATE TABLE IF NOT EXISTS team_members (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        team_id UUID REFERENCES teams(id) ON DELETE CASCADE,
-        user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-        role TEXT DEFAULT 'member',
-        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-        UNIQUE(team_id, user_id)
-      )
-    `
-
-    // Create loft_owners table
+    // Create other essential tables
     await sql`
       CREATE TABLE IF NOT EXISTS loft_owners (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -158,7 +92,6 @@ export async function ensureSchema() {
       )
     `
 
-    // Create lofts table
     await sql`
       CREATE TABLE IF NOT EXISTS lofts (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -166,7 +99,7 @@ export async function ensureSchema() {
         description TEXT,
         address TEXT NOT NULL,
         price_per_month DECIMAL NOT NULL,
-        status loft_status NOT NULL DEFAULT 'available',
+        status TEXT NOT NULL DEFAULT 'available',
         owner_id UUID REFERENCES loft_owners(id),
         company_percentage DECIMAL NOT NULL DEFAULT 0,
         owner_percentage DECIMAL NOT NULL DEFAULT 100,
@@ -175,13 +108,23 @@ export async function ensureSchema() {
       )
     `
 
-    // Create tasks table
+    await sql`
+      CREATE TABLE IF NOT EXISTS teams (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        name TEXT NOT NULL,
+        description TEXT,
+        created_by UUID REFERENCES users(id),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `
+
     await sql`
       CREATE TABLE IF NOT EXISTS tasks (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         title TEXT NOT NULL,
         description TEXT,
-        status task_status NOT NULL DEFAULT 'todo',
+        status TEXT NOT NULL DEFAULT 'todo',
         due_date TIMESTAMPTZ,
         assigned_to UUID REFERENCES users(id),
         team_id UUID REFERENCES teams(id),
@@ -192,14 +135,13 @@ export async function ensureSchema() {
       )
     `
 
-    // Create transactions table
     await sql`
       CREATE TABLE IF NOT EXISTS transactions (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         amount DECIMAL NOT NULL,
         description TEXT,
         transaction_type TEXT NOT NULL,
-        status transaction_status NOT NULL DEFAULT 'pending',
+        status TEXT NOT NULL DEFAULT 'pending',
         date TIMESTAMPTZ DEFAULT NOW(),
         category TEXT,
         task_id UUID REFERENCES tasks(id),
@@ -211,7 +153,6 @@ export async function ensureSchema() {
       )
     `
 
-    // Create categories table
     await sql`
       CREATE TABLE IF NOT EXISTS categories (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -223,21 +164,15 @@ export async function ensureSchema() {
       )
     `
 
-    // Create indexes for better performance
+    // Create indexes
     await sql`CREATE INDEX IF NOT EXISTS idx_user_sessions_token ON user_sessions(token)`
     await sql`CREATE INDEX IF NOT EXISTS idx_user_sessions_user_id ON user_sessions(user_id)`
-    await sql`CREATE INDEX IF NOT EXISTS idx_user_sessions_expires_at ON user_sessions(expires_at)`
-    await sql`CREATE INDEX IF NOT EXISTS idx_tasks_assigned_to ON tasks(assigned_to)`
-    await sql`CREATE INDEX IF NOT EXISTS idx_tasks_team_id ON tasks(team_id)`
-    await sql`CREATE INDEX IF NOT EXISTS idx_tasks_loft_id ON tasks(loft_id)`
-    await sql`CREATE INDEX IF NOT EXISTS idx_transactions_loft_id ON transactions(loft_id)`
-    await sql`CREATE INDEX IF NOT EXISTS idx_transactions_user_id ON transactions(user_id)`
+    await sql`CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)`
 
-    console.log('Database schema initialized successfully')
+    console.log('Database schema ensured successfully')
   } catch (error) {
     console.error('Schema initialization failed:', error)
-    // Don't throw the error to prevent app from crashing
-    // The connection test API will help diagnose the issue
+    throw error
   }
 }
 
