@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Separator } from "@/components/ui/separator"
-import { Eye, EyeOff } from "lucide-react"
+import { Eye, EyeOff, Wrench } from "lucide-react"
 import Link from "next/link"
 import { register as registerUser } from "@/lib/auth"
 import { registerSchema, type RegisterFormData } from "@/lib/validations"
@@ -22,6 +22,7 @@ export function RegisterForm() {
   const [error, setError] = useState("")
   const [isDebugging, setIsDebugging] = useState(false)
   const [debugLogs, setDebugLogs] = useState<string[]>([])
+  const [showDebugSection, setShowDebugSection] = useState(false)
   const router = useRouter()
 
   const {
@@ -41,8 +42,10 @@ export function RegisterForm() {
     const formData = getValues()
     setIsDebugging(true)
     setDebugLogs([])
+    setShowDebugSection(true)
     
     try {
+      console.log('Starting debug registration...')
       const response = await fetch('/api/debug-registration', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -50,15 +53,18 @@ export function RegisterForm() {
       })
       
       const result = await response.json()
+      console.log('Debug result:', result)
+      
       setDebugLogs(result.logs || [])
       
       if (result.success) {
-        setError(`Debug successful! Registration works. Timing: ${result.timing}`)
+        setError(`✅ Debug successful! Registration works. Timing: ${result.timing}`)
       } else {
-        setError(`Debug failed: ${result.error}. Timing: ${result.timing}`)
+        setError(`❌ Debug failed: ${result.error}. Timing: ${result.timing}`)
       }
     } catch (err) {
-      setError('Debug request failed - network or server error')
+      console.error('Debug error:', err)
+      setError('❌ Debug request failed - network or server error')
     } finally {
       setIsDebugging(false)
     }
@@ -73,7 +79,8 @@ export function RegisterForm() {
     // Add timeout to prevent infinite hanging
     const timeoutId = setTimeout(() => {
       setIsLoading(false)
-      setError("Registration timed out after 30 seconds. Please try the debug option.")
+      setError("⏰ Registration timed out after 30 seconds. Please try the debug option below.")
+      setShowDebugSection(true)
     }, 30000)
 
     try {
@@ -89,11 +96,13 @@ export function RegisterForm() {
       } else {
         console.log('Registration failed:', result.error)
         setError(result.error || "Registration failed")
+        setShowDebugSection(true)
       }
     } catch (err) {
       clearTimeout(timeoutId)
       console.error('Registration error caught:', err)
       setError("An unexpected error occurred during registration")
+      setShowDebugSection(true)
     } finally {
       setIsLoading(false)
     }
@@ -108,7 +117,7 @@ export function RegisterForm() {
       <CardContent className="space-y-4">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {error && (
-            <Alert variant={error.includes('successful') ? 'default' : 'destructive'}>
+            <Alert variant={error.includes('✅') ? 'default' : 'destructive'}>
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
@@ -175,29 +184,62 @@ export function RegisterForm() {
             {errors.role && <p className="text-sm text-red-500">{errors.role.message}</p>}
           </div>
 
-          <Button type="submit" className="w-full" disabled={isLoading || isDebugging}>
-            {isLoading ? "Creating account..." : "Create Account"}
-          </Button>
-          
-          <Button 
-            type="button" 
-            variant="outline" 
-            className="w-full" 
-            onClick={debugRegistration}
-            disabled={isLoading || isDebugging}
-          >
-            {isDebugging ? "Debugging..." : "🔧 Debug Registration"}
-          </Button>
+          <div className="space-y-3">
+            <Button type="submit" className="w-full" disabled={isLoading || isDebugging}>
+              {isLoading ? "Creating account..." : "Create Account"}
+            </Button>
+            
+            {/* Debug Button - Always Visible */}
+            <Button 
+              type="button" 
+              variant="outline" 
+              className="w-full border-2 border-orange-300 bg-orange-50 hover:bg-orange-100 text-orange-800" 
+              onClick={debugRegistration}
+              disabled={isLoading || isDebugging}
+            >
+              <Wrench className="w-4 h-4 mr-2" />
+              {isDebugging ? "Debugging..." : "🔧 Debug Registration"}
+            </Button>
+            
+            {/* Show debug section toggle */}
+            {!showDebugSection && (
+              <Button 
+                type="button" 
+                variant="ghost" 
+                size="sm"
+                className="w-full text-xs text-gray-500"
+                onClick={() => setShowDebugSection(true)}
+              >
+                Show Debug Section
+              </Button>
+            )}
+          </div>
         </form>
 
-        {debugLogs.length > 0 && (
-          <div className="mt-4 p-3 bg-gray-100 rounded-md">
-            <h4 className="font-medium mb-2">Debug Logs:</h4>
-            <div className="text-xs space-y-1 max-h-40 overflow-y-auto">
-              {debugLogs.map((log, index) => (
-                <div key={index} className="font-mono">{log}</div>
-              ))}
+        {/* Debug Logs Section */}
+        {showDebugSection && (
+          <div className="mt-4 p-4 bg-gray-50 rounded-lg border">
+            <div className="flex justify-between items-center mb-2">
+              <h4 className="font-medium text-sm">Debug Information</h4>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setShowDebugSection(false)}
+                className="text-xs"
+              >
+                Hide
+              </Button>
             </div>
+            
+            {debugLogs.length > 0 ? (
+              <div className="text-xs space-y-1 max-h-40 overflow-y-auto bg-white p-2 rounded border">
+                {debugLogs.map((log, index) => (
+                  <div key={index} className="font-mono text-gray-700">{log}</div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-gray-500">Click "Debug Registration" to see detailed logs</p>
+            )}
           </div>
         )}
 
@@ -210,6 +252,19 @@ export function RegisterForm() {
               Sign in
             </Link>
           </p>
+        </div>
+
+        {/* Quick Test Section */}
+        <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+          <h4 className="font-medium text-sm text-blue-800 mb-2">Quick Test</h4>
+          <p className="text-xs text-blue-700 mb-2">
+            Try these test credentials if registration fails:
+          </p>
+          <div className="text-xs space-y-1 text-blue-600">
+            <div><strong>Email:</strong> test@example.com</div>
+            <div><strong>Password:</strong> password123</div>
+            <div><strong>Name:</strong> Test User</div>
+          </div>
         </div>
       </CardContent>
     </Card>
