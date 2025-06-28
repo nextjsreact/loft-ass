@@ -18,11 +18,16 @@ if (typeof window === 'undefined') {
       throw new Error('Invalid database connection string format')
     }
     
-    console.log('Initializing database connection...')
-    console.log('Connection string format:', connectionString.substring(0, 20) + '...')
+    console.log('Initializing Neon database connection...')
+    console.log('Connection host:', connectionString.split('@')[1]?.split('/')[0] || 'unknown')
     
-    sql = neon(connectionString)
-    console.log('Database connection initialized successfully')
+    // Initialize Neon client with proper configuration
+    sql = neon(connectionString, {
+      fetchConnectionCache: true,
+      fullResults: false
+    })
+    
+    console.log('Neon database client initialized successfully')
     
   } catch (error) {
     console.error('Failed to initialize database:', error)
@@ -46,11 +51,11 @@ export async function ensureSchema() {
   _schemaInitialized = true
 
   try {
-    console.log('Testing database connection...')
+    console.log('Testing Neon database connection...')
     
     // Test connection with a simple query first
-    await sql`SELECT 1 as test`
-    console.log('Database connection test successful')
+    const testResult = await sql`SELECT 1 as test, NOW() as current_time`
+    console.log('Database connection test successful:', testResult[0])
     
     console.log('Ensuring database schema...')
     
@@ -63,7 +68,7 @@ export async function ensureSchema() {
       END $$;
     `
 
-    // Create users table
+    // Create users table with proper constraints
     await sql`
       CREATE TABLE IF NOT EXISTS users (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -178,10 +183,32 @@ export async function ensureSchema() {
       )
     `
 
-    // Create indexes
+    // Create indexes for better performance
     await sql`CREATE INDEX IF NOT EXISTS idx_user_sessions_token ON user_sessions(token)`
     await sql`CREATE INDEX IF NOT EXISTS idx_user_sessions_user_id ON user_sessions(user_id)`
     await sql`CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)`
+    await sql`CREATE INDEX IF NOT EXISTS idx_tasks_assigned_to ON tasks(assigned_to)`
+    await sql`CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status)`
+    await sql`CREATE INDEX IF NOT EXISTS idx_transactions_type ON transactions(transaction_type)`
+
+    // Insert default demo users if they don't exist
+    const existingUsers = await sql`SELECT COUNT(*) as count FROM users`
+    if (existingUsers[0].count === 0) {
+      console.log('Creating demo users...')
+      
+      // Import bcrypt for password hashing
+      const bcrypt = await import("bcryptjs")
+      const hashedPassword = await bcrypt.hash('password123', 12)
+      
+      await sql`
+        INSERT INTO users (email, full_name, role, password_hash, email_verified) VALUES
+        ('admin@loftmanager.com', 'System Admin', 'admin', ${hashedPassword}, true),
+        ('manager@loftmanager.com', 'Property Manager', 'manager', ${hashedPassword}, true),
+        ('member@loftmanager.com', 'Team Member', 'member', ${hashedPassword}, true)
+      `
+      
+      console.log('Demo users created successfully')
+    }
 
     console.log('Database schema ensured successfully')
   } catch (error) {
@@ -193,10 +220,19 @@ export async function ensureSchema() {
     // Provide more specific error information
     if (error instanceof Error) {
       if (error.message.includes('fetch failed')) {
-        console.error('Network connection to database failed. Please check:')
+        console.error('Network connection to Neon database failed. Please check:')
         console.error('1. DATABASE_URL is correct in your .env file')
         console.error('2. Your Neon database is active and accessible')
         console.error('3. Network connectivity to neon.tech')
+        console.error('4. Neon project is not suspended')
+      } else if (error.message.includes('password authentication failed')) {
+        console.error('Authentication failed. Please check:')
+        console.error('1. Username and password in DATABASE_URL')
+        console.error('2. Database user permissions')
+      } else if (error.message.includes('database') && error.message.includes('does not exist')) {
+        console.error('Database does not exist. Please check:')
+        console.error('1. Database name in DATABASE_URL')
+        console.error('2. Database was created in Neon console')
       }
     }
     
@@ -212,8 +248,8 @@ export async function testDatabaseConnection(): Promise<boolean> {
   }
   
   try {
-    await sql`SELECT 1 as test`
-    console.log('Database connection test passed')
+    const result = await sql`SELECT 1 as test, NOW() as current_time`
+    console.log('Database connection test passed:', result[0])
     return true
   } catch (error) {
     console.error('Database connection test failed:', error)
