@@ -35,19 +35,26 @@ export function RegisterForm() {
   })
 
   const onSubmit = async (data: RegisterFormData) => {
+    console.log('Form submission started:', { email: data.email, role: data.role })
     setIsLoading(true)
     setError("")
 
     try {
+      console.log('Calling registerUser function...')
       const result = await registerUser(data.email, data.password, data.fullName, data.role)
+      console.log('Registration result:', result)
+      
       if (result.success) {
+        console.log('Registration successful, redirecting to dashboard...')
         router.push("/dashboard")
         router.refresh()
       } else {
+        console.log('Registration failed:', result.error)
         setError(result.error || "Registration failed")
       }
     } catch (err) {
-      setError("An unexpected error occurred")
+      console.error('Registration error caught:', err)
+      setError("An unexpected error occurred during registration")
     } finally {
       setIsLoading(false)
     }
@@ -69,13 +76,24 @@ export function RegisterForm() {
 
           <div className="space-y-2">
             <Label htmlFor="fullName">Full Name</Label>
-            <Input id="fullName" placeholder="Enter your full name" {...register("fullName")} disabled={isLoading} />
+            <Input 
+              id="fullName" 
+              placeholder="Enter your full name" 
+              {...register("fullName")} 
+              disabled={isLoading} 
+            />
             {errors.fullName && <p className="text-sm text-red-500">{errors.fullName.message}</p>}
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" placeholder="Enter your email" {...register("email")} disabled={isLoading} />
+            <Input 
+              id="email" 
+              type="email" 
+              placeholder="Enter your email" 
+              {...register("email")} 
+              disabled={isLoading} 
+            />
             {errors.email && <p className="text-sm text-red-500">{errors.email.message}</p>}
           </div>
 
@@ -105,7 +123,7 @@ export function RegisterForm() {
 
           <div className="space-y-2">
             <Label htmlFor="role">Role</Label>
-            <Select onValueChange={(value) => setValue("role", value as any)} defaultValue="member">
+            <Select onValueChange={(value) => setValue("role", value as any)} defaultValue="member" disabled={isLoading}>
               <SelectTrigger>
                 <SelectValue placeholder="Select your role" />
               </SelectTrigger>

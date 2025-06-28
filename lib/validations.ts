@@ -1,14 +1,17 @@
 import { z } from 'zod';
 
 export const loginSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(6),
+  email: z.string().email("Please enter a valid email address"),
+  password: z.string().min(1, "Password is required"),
 });
 
 export const registerSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(6),
-  full_name: z.string().min(1),
+  email: z.string().email("Please enter a valid email address"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  fullName: z.string().min(1, "Full name is required"),
+  role: z.enum(['admin', 'manager', 'member'], {
+    errorMap: () => ({ message: "Please select a valid role" })
+  }),
 });
 
 export const loftSchema = z.object({
@@ -42,6 +45,8 @@ export const transactionSchema = z.object({
   loft_id: z.string().optional(),
 });
 
+export type LoginFormData = z.infer<typeof loginSchema>;
+export type RegisterFormData = z.infer<typeof registerSchema>;
 export type Transaction = z.infer<typeof transactionSchema>;
 export type TaskFormData = z.infer<typeof taskSchema>;
 
@@ -54,3 +59,4 @@ export const loftOwnerSchema = z.object({
 });
 
 export type LoftOwnerFormData = z.infer<typeof loftOwnerSchema>;
+export type LoftFormData = z.infer<typeof loftSchema>;

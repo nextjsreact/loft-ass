@@ -180,27 +180,57 @@ export async function register(
   role = "member",
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    console.log('Registration attempt for:', email, 'with role:', role)
+    
+    // Ensure database schema exists
     await ensureSchema()
+    console.log('Schema ensured for registration')
 
+    // Check if user already exists
+    console.log('Checking if user already exists...')
     const existingUsers = await sql`
       SELECT id FROM users WHERE email = ${email}
     `
 
     if (existingUsers.length > 0) {
+      console.log('User already exists:', email)
       return { success: false, error: "User with this email already exists" }
     }
 
-    const passwordHash = await hashPassword(password)
+    console.log('User does not exist, proceeding with registration...')
 
+    // Hash the password
+    console.log('Hashing password...')
+    const passwordHash = await hashPassword(password)
+    console.log('Password hashed successfully')
+
+    // Create the user
+    console.log('Creating user in database...')
     const newUsers = await sql`
       INSERT INTO users (email, full_name, role, password_hash, email_verified)
       VALUES (${email}, ${fullName}, ${role}, ${passwordHash}, true)
-      RETURNING id
+      RETURNING id, email, full_name, role
     `
 
-    const userId = newUsers[0].id
-    const token = await createSession(userId)
+    if (!newUsers || newUsers.length === 0) {
+      console.error('Failed to create user - no result returned')
+      return { success: false, error: "Failed to create user account" }
+    }
 
+    const newUser = newUsers[0]
+    console.log('User created successfully:', { 
+      id: newUser.id, 
+      email: newUser.email, 
+      role: newUser.role 
+    })
+
+    // Create session
+    console.log('Creating session for new user...')
+    const token = await createSession(newUser.id)
+    console.log('Session created successfully')
+
+    // Set cookie
+    console.log('Setting authentication cookie...')
     const cookieStore = await cookies()
     cookieStore.set("auth-token", token, {
       httpOnly: true,
@@ -210,10 +240,25 @@ export async function register(
       path: "/",
     })
 
+    console.log('Registration completed successfully for:', email)
     return { success: true }
   } catch (error) {
     console.error('Registration error:', error)
-    return { success: false, error: "An error occurred during registration" }
+    
+    // Provide more specific error messages
+    if (error instanceof Error) {
+      if (error.message.includes('duplicate key') || error.message.includes('unique constraint')) {
+        return { success: false, error: "User with this email already exists" }
+      }
+      if (error.message.includes('connection')) {
+        return { success: false, error: "Database connection error. Please try again." }
+      }
+      if (error.message.includes('timeout')) {
+        return { success: false, error: "Request timed out. Please try again." }
+      }
+    }
+    
+    return { success: false, error: "An error occurred during registration. Please try again." }
   }
 }
 
