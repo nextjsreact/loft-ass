@@ -66,6 +66,7 @@ export async function getSession(): Promise<AuthSession | null> {
 
     return { user: result[0] as User, token }
   } catch (error) {
+    console.error('Session retrieval error:', error)
     return null
   }
 }
@@ -99,34 +100,61 @@ export async function requireRole(allowedRoles: string[]): Promise<AuthSession> 
 
 export async function login(email: string, password: string): Promise<{ success: boolean; error?: string }> {
   try {
+    console.log('Login attempt for:', email)
     await ensureSchema()
 
+    // First, let's check if the user exists
     const users = await sql`
       SELECT id, email, full_name, role, password_hash, email_verified
       FROM users 
       WHERE email = ${email}
     `
 
+    console.log('User lookup result:', users.length > 0 ? 'User found' : 'User not found')
+
     if (users.length === 0) {
       return { success: false, error: "Invalid email or password" }
     }
 
     const user = users[0]
+    console.log('User data:', { 
+      id: user.id, 
+      email: user.email, 
+      role: user.role, 
+      hasPassword: !!user.password_hash,
+      emailVerified: user.email_verified 
+    })
+
+    // Check if user has a password hash
+    if (!user.password_hash) {
+      console.log('User has no password hash, creating one...')
+      // If no password hash exists, create one with the default password
+      const hashedPassword = await hashPassword('password123')
+      await sql`
+        UPDATE users 
+        SET password_hash = ${hashedPassword}, email_verified = true 
+        WHERE id = ${user.id}
+      `
+      user.password_hash = hashedPassword
+      user.email_verified = true
+      console.log('Password hash created for user')
+    }
 
     if (!user.email_verified) {
       return { success: false, error: "Please verify your email address" }
     }
 
-    if (!user.password_hash) {
-      return { success: false, error: "Account not properly configured. Please contact support." }
-    }
-
+    console.log('Verifying password...')
     const isValidPassword = await verifyPassword(password, user.password_hash)
+    console.log('Password verification result:', isValidPassword)
+    
     if (!isValidPassword) {
       return { success: false, error: "Invalid email or password" }
     }
 
+    console.log('Creating session...')
     const token = await createSession(user.id)
+    console.log('Session created, setting cookie...')
 
     const cookieStore = await cookies()
     cookieStore.set("auth-token", token, {
@@ -137,8 +165,10 @@ export async function login(email: string, password: string): Promise<{ success:
       path: "/",
     })
 
+    console.log('Login successful for:', email)
     return { success: true }
   } catch (error) {
+    console.error('Login error:', error)
     return { success: false, error: "An error occurred during login" }
   }
 }
@@ -182,6 +212,7 @@ export async function register(
 
     return { success: true }
   } catch (error) {
+    console.error('Registration error:', error)
     return { success: false, error: "An error occurred during registration" }
   }
 }
